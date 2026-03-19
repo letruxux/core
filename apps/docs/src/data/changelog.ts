@@ -22,9 +22,7 @@ export const changelogEntries: ChangelogEntry[] = [
       },
       {
         title: '@fluxerjs/core — GuildMember.move()',
-        items: [
-          'GuildMember.move(channelId) — move members between voice channels (#27)',
-        ],
+        items: ['GuildMember.move(channelId) — move members between voice channels (#27)'],
       },
       {
         title: '@fluxerjs/ws — Reconnect fixes',
