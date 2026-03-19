@@ -136,7 +136,10 @@ describe('GuildMember', () => {
       let editCalled: boolean = false;
       let editParams: { channel_id: string | null; connection_id?: string | null } | undefined;
 
-      member.edit = async (params: { channel_id: string | null; connection_id?: string | null }) => {
+      member.edit = async (params: {
+        channel_id: string | null;
+        connection_id?: string | null;
+      }) => {
         editCalled = true;
         editParams = params;
         return member;
@@ -156,7 +159,10 @@ describe('GuildMember', () => {
       let editCalled: boolean = false;
       let editParams: { channel_id: string | null; connection_id?: string | null } | undefined;
 
-      member.edit = async (params: { channel_id: string | null; connection_id?: string | null }) => {
+      member.edit = async (params: {
+        channel_id: string | null;
+        connection_id?: string | null;
+      }) => {
         editCalled = true;
         editParams = params;
         return member;
@@ -176,7 +182,10 @@ describe('GuildMember', () => {
       let editCalled: boolean = false;
       let editParams: { channel_id: string | null; connection_id?: string | null } | undefined;
 
-      member.edit = async (params: { channel_id: string | null; connection_id?: string | null }) => {
+      member.edit = async (params: {
+        channel_id: string | null;
+        connection_id?: string | null;
+      }) => {
         editCalled = true;
         editParams = params;
         return member;
