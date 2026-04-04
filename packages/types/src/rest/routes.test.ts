@@ -107,6 +107,9 @@ describe('Routes', () => {
     it('gatewayBot builds path', () => {
       expect(Routes.gatewayBot()).toBe('/gateway/bot');
     });
+    it('instanceDiscovery builds path', () => {
+      expect(Routes.instanceDiscovery()).toBe('/.well-known/fluxer');
+    });
     it('instance builds path', () => {
       expect(Routes.instance()).toBe('/instance');
     });

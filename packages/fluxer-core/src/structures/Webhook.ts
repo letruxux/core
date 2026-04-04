@@ -185,6 +185,43 @@ export class Webhook extends Base {
   }
 
   /**
+   * Fetch a message sent by this webhook.
+   * Requires the webhook token.
+   * @param messageId - The ID of the message to fetch
+   * @returns The message
+   * @throws Error if token is not available
+   */
+  async fetchMessage(messageId: string): Promise<Message> {
+    if (!this.token) {
+      throw new Error(
+        'Webhook token is required to fetch messages. The token is only returned when creating a webhook; fetched webhooks cannot fetch messages.',
+      );
+    }
+    const data = await this.client.rest.get<APIMessage>(
+      Routes.webhookMessage(this.id, this.token, messageId),
+      { auth: false },
+    );
+    return new Message(this.client, data);
+  }
+
+  /**
+   * Delete a message sent by this webhook.
+   * Requires the webhook token.
+   * @param messageId - The ID of the message to delete
+   * @throws Error if token is not available
+   */
+  async deleteMessage(messageId: string): Promise<void> {
+    if (!this.token) {
+      throw new Error(
+        'Webhook token is required to delete messages. The token is only returned when creating a webhook; fetched webhooks cannot delete messages.',
+      );
+    }
+    await this.client.rest.delete(Routes.webhookMessage(this.id, this.token, messageId), {
+      auth: false,
+    });
+  }
+
+  /**
    * Fetch a webhook by ID using bot auth.
    * @param client - The client instance
    * @param webhookId - The webhook ID

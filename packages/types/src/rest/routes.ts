@@ -84,6 +84,7 @@ export const Routes = {
     guildId ? `/users/${id}/profile?guild_id=${guildId}` : `/users/${id}/profile`,
 
   // Instance (unauthenticated)
+  instanceDiscovery: () => '/.well-known/fluxer' as const,
   instance: () => '/instance' as const,
 
   // Gateway

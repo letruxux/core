@@ -265,11 +265,12 @@ export class Client extends EventEmitter {
   }
 
   /**
-   * Fetch instance info (API URL, gateway URL, features). GET /instance.
+   * Fetch instance discovery info (API URL, gateway URL, features).
+   * Uses canonical GET /.well-known/fluxer.
    * Does not require authentication.
    */
   async fetchInstance(): Promise<APIInstance> {
-    return this.rest.get<APIInstance>(Routes.instance(), { auth: false });
+    return this.rest.get<APIInstance>(Routes.instanceDiscovery(), { auth: false });
   }
 
   /**

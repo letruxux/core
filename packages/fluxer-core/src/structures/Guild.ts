@@ -13,6 +13,7 @@ import {
   APIGuild,
   APIGuildAuditLog,
   APIGuildMember,
+  APIInvite,
   APIRole,
   APIVanityURL,
   RESTCreateRoleBody,
@@ -36,6 +37,7 @@ import { Webhook } from './Webhook.js';
 import { GuildBan } from './GuildBan.js';
 import { GuildEmoji } from './GuildEmoji';
 import { GuildSticker } from './GuildSticker';
+import { Invite } from './Invite.js';
 
 /** Represents a Fluxer guild (server). */
 export class Guild extends Base {
@@ -76,6 +78,7 @@ export class Guild extends Base {
   channels = new Collection<string, GuildChannel>();
   roles = new Collection<string, Role>();
   emojis = new Collection<string, GuildEmoji>();
+  stickers = new Collection<string, GuildSticker>();
 
   /** @param data - API guild from GET /guilds/{id} or gateway GUILD_CREATE */
   constructor(client: Client, data: APIGuild & { roles?: APIRole[]; ownerId?: string }) {
@@ -369,6 +372,26 @@ export class Guild extends Base {
   }
 
   /**
+   * Fetch all invites in this guild.
+   * Requires Manage Guild permission.
+   */
+  async fetchInvites(): Promise<Invite[]> {
+    const data = await this.client.rest.get<APIInvite[] | Record<string, APIInvite>>(
+      Routes.guildInvites(this.id),
+    );
+    const list = Array.isArray(data) ? data : Object.values(data ?? {});
+    return list.map((invite) => new Invite(this.client, invite));
+  }
+
+  /**
+   * Fetch a guild invite by code or URL.
+   * Convenience wrapper for Invite.fetch(client, codeOrUrl).
+   */
+  async fetchInvite(codeOrUrl: string): Promise<Invite> {
+    return Invite.fetch(this.client, codeOrUrl);
+  }
+
+  /**
    * Create a channel in this guild.
    * @param data - Channel data: type (0=text, 2=voice, 4=category, 5=link), name, and optional parent_id, topic, bitrate, user_limit, nsfw, permission_overwrites
    * Requires Manage Channels permission.
@@ -634,6 +657,35 @@ export class Guild extends Base {
   }
 
   /**
+   * Fetch all stickers in this guild.
+   * @returns Array of GuildSticker objects (cached in guild.stickers)
+   */
+  async fetchStickers(): Promise<GuildSticker[]> {
+    const data = await this.client.rest.get<APISticker[] | Record<string, APISticker>>(
+      Routes.guildStickers(this.id),
+    );
+    const list = Array.isArray(data) ? data : Object.values(data ?? {});
+    const stickers: GuildSticker[] = [];
+    for (const s of list) {
+      const sticker = new GuildSticker(this.client, { ...s, guild_id: this.id }, this.id);
+      this.stickers.set(sticker.id, sticker);
+      stickers.push(sticker);
+    }
+    return stickers;
+  }
+
+  /**
+   * Fetch a single sticker by ID.
+   * @param stickerId - The sticker ID to fetch
+   */
+  async fetchSticker(stickerId: string): Promise<GuildSticker> {
+    const data = await this.client.rest.get<APISticker>(Routes.guildSticker(this.id, stickerId));
+    const sticker = new GuildSticker(this.client, { ...data, guild_id: this.id }, this.id);
+    this.stickers.set(sticker.id, sticker);
+    return sticker;
+  }
+
+  /**
    * Bulk create emojis. POST /guilds/{id}/emojis/bulk.
    * @param emojis - Array of { name, image } (base64), 1-50 emojis
    * @returns Array of created GuildEmoji objects
@@ -671,6 +723,12 @@ export class Guild extends Base {
       },
     );
     const list = Array.isArray(data) ? data : (data?.stickers ?? []);
-    return list.map((s) => new GuildSticker(this.client, { ...s, guild_id: this.id }, this.id));
+    const created = list.map(
+      (s) => new GuildSticker(this.client, { ...s, guild_id: this.id }, this.id),
+    );
+    for (const sticker of created) {
+      this.stickers.set(sticker.id, sticker);
+    }
+    return created;
   }
 }

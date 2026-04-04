@@ -22,6 +22,53 @@ export class Invite extends Base {
   readonly maxUses: number | null;
   readonly maxAge: number | null;
 
+  /**
+   * Normalize an invite input into a raw invite code.
+   * Accepts either an invite code (e.g. "abc123") or a URL (e.g. "https://fluxer.gg/abc123").
+   */
+  private static normalizeCode(codeOrUrl: string): string {
+    const input = codeOrUrl.trim();
+    if (!input) {
+      throw new RangeError('Invite code cannot be empty');
+    }
+
+    const parseAsUrl = (value: string): string | null => {
+      try {
+        const url = new URL(value);
+        const segments = url.pathname.split('/').filter(Boolean);
+        if (segments.length === 0) {
+          return null;
+        }
+
+        const inviteSegmentIdx = segments.findIndex((segment) => {
+          const lower = segment.toLowerCase();
+          return lower === 'invite' || lower === 'invites';
+        });
+
+        const code =
+          inviteSegmentIdx >= 0 && segments[inviteSegmentIdx + 1]
+            ? segments[inviteSegmentIdx + 1]
+            : segments[segments.length - 1];
+
+        return decodeURIComponent(code).trim();
+      } catch {
+        return null;
+      }
+    };
+
+    const directCode = decodeURIComponent(input).trim();
+    const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(input);
+    const fromAbsoluteUrl = parseAsUrl(input);
+    const fromHostLike = hasScheme ? null : parseAsUrl(`https://${input}`);
+    const code = fromAbsoluteUrl ?? fromHostLike ?? directCode;
+
+    if (!code || /[\s/?#]/.test(code)) {
+      throw new RangeError('Invalid invite code or URL');
+    }
+
+    return code;
+  }
+
   /** @param data - API invite from GET /invites/{code}, channel/guild invite list, or gateway INVITE_CREATE */
   constructor(client: Client, data: APIInvite) {
     super();
@@ -39,6 +86,16 @@ export class Invite extends Base {
     this.uses = data.uses ?? null;
     this.maxUses = data.max_uses ?? null;
     this.maxAge = data.max_age ?? null;
+  }
+
+  /**
+   * Fetch invite information by code or URL.
+   * Does not consume or accept the invite.
+   */
+  static async fetch(client: Client, codeOrUrl: string): Promise<Invite> {
+    const code = Invite.normalizeCode(codeOrUrl);
+    const data = await client.rest.get(Routes.invite(code));
+    return new Invite(client, data as APIInvite);
   }
 
   /** Full invite URL (https://fluxer.gg/{code} or instance-specific). */
